@@ -11,10 +11,14 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
   server.registerTool(
     'list_payrolls',
     {
-      description: 'List payrolls (folhas). Filter by competency (YYYY-MM) and status.',
+      description:
+        'Lista as folhas de pagamento. Cada folha corresponde a uma competência (mês/ano) e traz total bruto, total líquido, quantidade de colaboradores e status (aberta, fechada, transmitida, etc.). Filtrável por competência (formato "AAAA-MM", ex: "2024-03") e status. Use para: "me mostre a folha de março", "folhas fechadas do ano passado", "total pago em fevereiro".',
       inputSchema: {
-        competency: z.string().optional().describe('Competency in "YYYY-MM" format.'),
-        status: z.string().optional(),
+        competency: z
+          .string()
+          .optional()
+          .describe('Competência no formato "AAAA-MM" (ex: "2024-03" = março/2024).'),
+        status: z.string().optional().describe('Status da folha. Ex: "closed", "open".'),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(200).optional(),
       },
@@ -32,8 +36,11 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
   server.registerTool(
     'get_payroll',
     {
-      description: 'Get a single payroll by id.',
-      inputSchema: { payrollId: z.string().min(1) },
+      description:
+        'Detalhes de uma folha de pagamento específica: totais (bruto, líquido, encargos), quantidade de colaboradores, período de referência e status. Use quando o usuário quiser abrir uma folha específica encontrada em list_payrolls.',
+      inputSchema: {
+        payrollId: z.string().min(1).describe('Identificador da folha (obtido em list_payrolls).'),
+      },
     },
     wrap(async ({ payrollId }: { payrollId: string }) =>
       ok(await client.get(`/payrolls/${encodeURIComponent(payrollId)}`)),
@@ -43,9 +50,10 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
   server.registerTool(
     'list_payroll_events',
     {
-      description: 'List payroll events (proventos/descontos). Filter by payrollId.',
+      description:
+        'Lista os eventos de folha — proventos (o que o colaborador ganha: salário, horas extras, comissões, adicional noturno) e descontos (INSS, IRRF, vale-transporte, faltas). Cada evento tem colaborador, tipo, valor e a folha a que pertence. Filtrável por folha. Use para "detalhamento da folha de X", "descontos de Y".',
       inputSchema: {
-        payrollId: z.string().optional(),
+        payrollId: z.string().optional().describe('Filtra eventos de uma folha específica.'),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(200).optional(),
       },
@@ -59,9 +67,13 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
   server.registerTool(
     'list_scheduled_entries',
     {
-      description: 'List scheduled entries (lançamentos programados). Filter by personId.',
+      description:
+        'Lista os lançamentos programados — proventos ou descontos recorrentes agendados para próximas folhas de um colaborador (ex: parcelas de empréstimo consignado, gratificação parcelada, plano de saúde). Filtrável por colaborador. Use quando o usuário perguntar sobre lançamentos futuros/agendados.',
       inputSchema: {
-        personId: z.string().optional(),
+        personId: z
+          .string()
+          .optional()
+          .describe('Filtra lançamentos de um colaborador específico.'),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(200).optional(),
       },

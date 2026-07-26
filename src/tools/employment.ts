@@ -15,10 +15,13 @@ export function registerEmploymentTools(
     'list_employment_relationships',
     {
       description:
-        'List employment relationships (vínculos). Filter by person or status; supports pagination.',
+        'Lista os vínculos de trabalho — os contratos que ligam colaboradores à empresa (CLT, PJ, estagiário, aprendiz, temporário, etc.). Cada item traz o colaborador, tipo do contrato, data de início, salário, jornada e status. Filtrável por colaborador ou por status. Use para perguntas como "quantos CLTs eu tenho?", "contratos ativos", "colaboradores PJ".',
       inputSchema: {
-        personId: z.string().optional(),
-        status: z.string().optional(),
+        personId: z
+          .string()
+          .optional()
+          .describe('Identificador do colaborador — filtra vínculos dele.'),
+        status: z.string().optional().describe('Status do vínculo. Ex: "active".'),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(200).optional(),
       },
@@ -36,8 +39,11 @@ export function registerEmploymentTools(
   server.registerTool(
     'get_employment_relationship',
     {
-      description: 'Get a single employment relationship (vínculo) by id.',
-      inputSchema: { id: z.string().min(1) },
+      description:
+        'Detalhes completos de um vínculo/contrato específico: datas, salário, jornada, horários, benefícios, categoria eSocial. Use quando o usuário perguntar sobre condições contratuais de um colaborador.',
+      inputSchema: {
+        id: z.string().min(1).describe('Identificador do vínculo.'),
+      },
     },
     wrap(async ({ id }: { id: string }) =>
       ok(await client.get(`/employment-relationships/${encodeURIComponent(id)}`)),
