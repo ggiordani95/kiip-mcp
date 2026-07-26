@@ -31794,7 +31794,7 @@ function registerTenantTools(server, { client, session }) {
 
 // src/server.ts
 function createServer(cfg) {
-  const server = new McpServer({ name: "kiip", version: "0.2.2" });
+  const server = new McpServer({ name: "kiip", version: "0.2.3" });
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
