@@ -31626,10 +31626,10 @@ function registerEmploymentTools(server, { client }) {
   server.registerTool(
     "list_employment_relationships",
     {
-      description: "List employment relationships (v\xEDnculos). Filter by person or status; supports pagination.",
+      description: 'Lista os v\xEDnculos de trabalho \u2014 os contratos que ligam colaboradores \xE0 empresa (CLT, PJ, estagi\xE1rio, aprendiz, tempor\xE1rio, etc.). Cada item traz o colaborador, tipo do contrato, data de in\xEDcio, sal\xE1rio, jornada e status. Filtr\xE1vel por colaborador ou por status. Use para perguntas como "quantos CLTs eu tenho?", "contratos ativos", "colaboradores PJ".',
       inputSchema: {
-        personId: external_exports.string().optional(),
-        status: external_exports.string().optional(),
+        personId: external_exports.string().optional().describe("Identificador do colaborador \u2014 filtra v\xEDnculos dele."),
+        status: external_exports.string().optional().describe('Status do v\xEDnculo. Ex: "active".'),
         page: external_exports.number().int().positive().optional(),
         pageSize: external_exports.number().int().positive().max(200).optional()
       }
@@ -31641,8 +31641,10 @@ function registerEmploymentTools(server, { client }) {
   server.registerTool(
     "get_employment_relationship",
     {
-      description: "Get a single employment relationship (v\xEDnculo) by id.",
-      inputSchema: { id: external_exports.string().min(1) }
+      description: "Detalhes completos de um v\xEDnculo/contrato espec\xEDfico: datas, sal\xE1rio, jornada, hor\xE1rios, benef\xEDcios, categoria eSocial. Use quando o usu\xE1rio perguntar sobre condi\xE7\xF5es contratuais de um colaborador.",
+      inputSchema: {
+        id: external_exports.string().min(1).describe("Identificador do v\xEDnculo.")
+      }
     },
     wrap(
       async ({ id }) => ok(await client.get(`/employment-relationships/${encodeURIComponent(id)}`))
@@ -31652,7 +31654,7 @@ function registerEmploymentTools(server, { client }) {
 
 // src/tools/org-structure.ts
 var listSchema = {
-  search: external_exports.string().optional(),
+  search: external_exports.string().optional().describe("Busca por texto livre no nome."),
   page: external_exports.number().int().positive().optional(),
   pageSize: external_exports.number().int().positive().max(200).optional()
 };
@@ -31664,10 +31666,26 @@ function registerOrgStructureTools(server, { client }) {
       wrap(async (args) => ok(await client.get(path, args)))
     );
   };
-  registerListing("list_departments", "/departments", "List Kiip departments.");
-  registerListing("list_cost_centers", "/cost-centers", "List Kiip cost centers.");
-  registerListing("list_localities", "/localities", "List Kiip localities (workplaces).");
-  registerListing("list_job_positions", "/job-positions", "List Kiip job positions (cargos).");
+  registerListing(
+    "list_departments",
+    "/departments",
+    "Lista os departamentos da empresa (setores organizacionais como Financeiro, Comercial, Tecnologia, RH). Cada departamento pode ter um respons\xE1vel e quantidade de colaboradores. Use para perguntas sobre organograma, distribui\xE7\xE3o por setor."
+  );
+  registerListing(
+    "list_cost_centers",
+    "/cost-centers",
+    "Lista os centros de custo \u2014 usados para agrupar despesas de folha por unidade de neg\xF3cio, projeto ou \xE1rea. Um colaborador pode estar vinculado a um centro de custo espec\xEDfico. Use quando o usu\xE1rio perguntar sobre aloca\xE7\xE3o de custos ou distribui\xE7\xE3o financeira por \xE1rea."
+  );
+  registerListing(
+    "list_localities",
+    "/localities",
+    "Lista os locais de trabalho \u2014 endere\xE7os f\xEDsicos ou remotos onde os colaboradores atuam (matriz, filiais, home office). Use para perguntas sobre distribui\xE7\xE3o geogr\xE1fica dos colaboradores."
+  );
+  registerListing(
+    "list_job_positions",
+    "/job-positions",
+    "Lista os cargos existentes na empresa (ex: Analista Financeiro Jr., Gerente de Produto, Coordenador Comercial). Use para perguntas sobre plano de cargos, fun\xE7\xF5es dispon\xEDveis ou distribui\xE7\xE3o por cargo."
+  );
 }
 
 // src/tools/payroll.ts
@@ -31675,10 +31693,10 @@ function registerPayrollTools(server, { client }) {
   server.registerTool(
     "list_payrolls",
     {
-      description: "List payrolls (folhas). Filter by competency (YYYY-MM) and status.",
+      description: 'Lista as folhas de pagamento. Cada folha corresponde a uma compet\xEAncia (m\xEAs/ano) e traz total bruto, total l\xEDquido, quantidade de colaboradores e status (aberta, fechada, transmitida, etc.). Filtr\xE1vel por compet\xEAncia (formato "AAAA-MM", ex: "2024-03") e status. Use para: "me mostre a folha de mar\xE7o", "folhas fechadas do ano passado", "total pago em fevereiro".',
       inputSchema: {
-        competency: external_exports.string().optional().describe('Competency in "YYYY-MM" format.'),
-        status: external_exports.string().optional(),
+        competency: external_exports.string().optional().describe('Compet\xEAncia no formato "AAAA-MM" (ex: "2024-03" = mar\xE7o/2024).'),
+        status: external_exports.string().optional().describe('Status da folha. Ex: "closed", "open".'),
         page: external_exports.number().int().positive().optional(),
         pageSize: external_exports.number().int().positive().max(200).optional()
       }
@@ -31690,8 +31708,10 @@ function registerPayrollTools(server, { client }) {
   server.registerTool(
     "get_payroll",
     {
-      description: "Get a single payroll by id.",
-      inputSchema: { payrollId: external_exports.string().min(1) }
+      description: "Detalhes de uma folha de pagamento espec\xEDfica: totais (bruto, l\xEDquido, encargos), quantidade de colaboradores, per\xEDodo de refer\xEAncia e status. Use quando o usu\xE1rio quiser abrir uma folha espec\xEDfica encontrada em list_payrolls.",
+      inputSchema: {
+        payrollId: external_exports.string().min(1).describe("Identificador da folha (obtido em list_payrolls).")
+      }
     },
     wrap(
       async ({ payrollId }) => ok(await client.get(`/payrolls/${encodeURIComponent(payrollId)}`))
@@ -31700,9 +31720,9 @@ function registerPayrollTools(server, { client }) {
   server.registerTool(
     "list_payroll_events",
     {
-      description: "List payroll events (proventos/descontos). Filter by payrollId.",
+      description: 'Lista os eventos de folha \u2014 proventos (o que o colaborador ganha: sal\xE1rio, horas extras, comiss\xF5es, adicional noturno) e descontos (INSS, IRRF, vale-transporte, faltas). Cada evento tem colaborador, tipo, valor e a folha a que pertence. Filtr\xE1vel por folha. Use para "detalhamento da folha de X", "descontos de Y".',
       inputSchema: {
-        payrollId: external_exports.string().optional(),
+        payrollId: external_exports.string().optional().describe("Filtra eventos de uma folha espec\xEDfica."),
         page: external_exports.number().int().positive().optional(),
         pageSize: external_exports.number().int().positive().max(200).optional()
       }
@@ -31714,9 +31734,9 @@ function registerPayrollTools(server, { client }) {
   server.registerTool(
     "list_scheduled_entries",
     {
-      description: "List scheduled entries (lan\xE7amentos programados). Filter by personId.",
+      description: "Lista os lan\xE7amentos programados \u2014 proventos ou descontos recorrentes agendados para pr\xF3ximas folhas de um colaborador (ex: parcelas de empr\xE9stimo consignado, gratifica\xE7\xE3o parcelada, plano de sa\xFAde). Filtr\xE1vel por colaborador. Use quando o usu\xE1rio perguntar sobre lan\xE7amentos futuros/agendados.",
       inputSchema: {
-        personId: external_exports.string().optional(),
+        personId: external_exports.string().optional().describe("Filtra lan\xE7amentos de um colaborador espec\xEDfico."),
         page: external_exports.number().int().positive().optional(),
         pageSize: external_exports.number().int().positive().max(200).optional()
       }
@@ -31732,12 +31752,12 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "list_persons",
     {
-      description: "List Kiip persons (employees) with optional search and pagination. Returns a resume view: id, name, status, department, job position.",
+      description: 'Lista os colaboradores da empresa ativa. Cada item traz nome, status (ativo/inativo/afastado/em admiss\xE3o), cargo, departamento e l\xEDder direto. Suporta busca por texto livre (nome, e-mail, CPF) e filtro por status. Bom para responder: "quantos colaboradores tenho?", "quem est\xE1 no departamento X?", "colaboradores admitidos em janeiro". Ao apresentar, resuma em linguagem de neg\xF3cio; nunca exponha campos JSON, UUIDs ou o nome desta tool.',
       inputSchema: {
-        search: external_exports.string().optional().describe("Free-text search across person fields."),
-        status: external_exports.string().optional().describe('Filter by status (e.g., "active").'),
-        page: external_exports.number().int().positive().optional().describe("1-based page number."),
-        pageSize: external_exports.number().int().positive().max(200).optional()
+        search: external_exports.string().optional().describe("Busca por texto livre \u2014 nome, e-mail ou documento."),
+        status: external_exports.string().optional().describe('Status do colaborador. Ex: "active", "inactive", "on_leave".'),
+        page: external_exports.number().int().positive().optional().describe("P\xE1gina (a partir de 1)."),
+        pageSize: external_exports.number().int().positive().max(200).optional().describe("M\xE1ximo por p\xE1gina (at\xE9 200).")
       }
     },
     wrap(
@@ -31747,8 +31767,10 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "get_person",
     {
-      description: "Get full detail for a single person by ID.",
-      inputSchema: { personId: external_exports.string().min(1) }
+      description: "Detalhes completos de um colaborador: dados pessoais, contato, endere\xE7o, contrato, dependentes, documentos, dados banc\xE1rios. Use quando o usu\xE1rio perguntar sobre um colaborador espec\xEDfico. Ao apresentar, agrupe em se\xE7\xF5es (dados pessoais, contrato, contato); nunca exponha IDs internos.",
+      inputSchema: {
+        personId: external_exports.string().min(1).describe("Identificador do colaborador (obtido em list_persons).")
+      }
     },
     wrap(
       async ({ personId }) => ok(await client.get(`/persons/${encodeURIComponent(personId)}`))
@@ -31757,8 +31779,10 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "get_person_summary",
     {
-      description: "Get the profile summary card for a person (compact overview).",
-      inputSchema: { personId: external_exports.string().min(1) }
+      description: "Cart\xE3o-resumo do colaborador \u2014 vis\xE3o compacta com nome, cargo, departamento, tempo de casa e principais infos. Use quando o usu\xE1rio quer s\xF3 um panorama r\xE1pido, n\xE3o o cadastro completo.",
+      inputSchema: {
+        personId: external_exports.string().min(1).describe("Identificador do colaborador.")
+      }
     },
     wrap(
       async ({ personId }) => ok(await client.get(`/persons/${encodeURIComponent(personId)}/profile/summary`))
@@ -31771,7 +31795,7 @@ function registerTenantTools(server, { client, session }) {
   server.registerTool(
     "list_tenants",
     {
-      description: "List Kiip tenants the current user has access to. Returns an array of tenants with tenantId and display name. Use this before switch_tenant.",
+      description: 'Lista as empresas (contas Kiip) que o usu\xE1rio tem acesso, indicando qual est\xE1 ativa no momento. Cada empresa tem nome, CNPJ, quantidade de colaboradores ativos e status. Use antes de trocar de empresa, ou quando o usu\xE1rio perguntar "em qual empresa estou?" / "quais empresas eu acesso?". Ao apresentar, use "empresa" (n\xE3o "tenant"); nunca cite o identificador interno.',
       inputSchema: {}
     },
     wrap(async () => ok(await client.get("/auth/tenants")))
@@ -31779,9 +31803,9 @@ function registerTenantTools(server, { client, session }) {
   server.registerTool(
     "switch_tenant",
     {
-      description: "Switch the current Kiip session to a different tenant. The MCP updates its in-memory token; subsequent tool calls use the new tenant until the process restarts.",
+      description: "Troca a empresa ativa da sess\xE3o. Ap\xF3s a troca, todas as consultas passam a operar na nova empresa at\xE9 a sess\xE3o terminar. S\xF3 pe\xE7a o identificador ao usu\xE1rio se ele n\xE3o deixou claro qual empresa quer \u2014 o mais comum \xE9 usar list_tenants primeiro e escolher pelo nome.",
       inputSchema: {
-        tenantId: external_exports.string().min(1).describe("The tenant ID to switch to (from list_tenants).")
+        tenantId: external_exports.string().min(1).describe("Identificador da empresa alvo (obtido em list_tenants).")
       }
     },
     wrap(async ({ tenantId }) => {
@@ -31796,7 +31820,7 @@ function registerTenantTools(server, { client, session }) {
 
 // src/server.ts
 function createServer(cfg) {
-  const server = new McpServer({ name: "kiip", version: "0.2.6" });
+  const server = new McpServer({ name: "kiip", version: "0.2.7" });
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
