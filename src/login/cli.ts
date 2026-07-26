@@ -31,26 +31,29 @@ export async function runLoginCli(env: Record<string, string | undefined>): Prom
   }
 
   const url = `http://127.0.0.1:${handle.port}/?csrf=${handle.csrf}`;
-  console.error(`[kiip-mcp] Opening ${url} in your browser...`);
+  console.error(`[kiip-mcp] Opening login page at ${url}`);
   openBrowser(url);
-  console.error('[kiip-mcp] If it did not open, paste the URL above into your browser.');
-  console.error(`[kiip-mcp] Token will be saved to ${store.path()}. Ctrl+C to cancel.`);
 
+  let timeoutHandle: NodeJS.Timeout | undefined;
   const success = new Promise<void>((resolve) => handle.events.once('login-success', resolve));
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('login timed out after 10 minutes')), TIMEOUT_MS),
-  );
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(
+      () => reject(new Error('login timed out after 10 minutes')),
+      TIMEOUT_MS,
+    );
+  });
 
   try {
     await Promise.race([success, timeout]);
   } catch (err) {
     console.error(`[kiip-mcp] ${(err as Error).message}`);
+    if (timeoutHandle) clearTimeout(timeoutHandle);
     await handle.close();
     return 1;
   }
 
+  if (timeoutHandle) clearTimeout(timeoutHandle);
   console.error('[kiip-mcp] Logged in. Token saved.');
-  await new Promise((r) => setTimeout(r, 2000));
   await handle.close();
   return 0;
 }
