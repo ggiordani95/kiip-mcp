@@ -23541,23 +23541,26 @@ async function runLoginCli(env) {
     return 1;
   }
   const url2 = `http://127.0.0.1:${handle2.port}/?csrf=${handle2.csrf}`;
-  console.error(`[kiip-mcp] Opening ${url2} in your browser...`);
+  console.error(`[kiip-mcp] Opening login page at ${url2}`);
   openBrowser(url2);
-  console.error("[kiip-mcp] If it did not open, paste the URL above into your browser.");
-  console.error(`[kiip-mcp] Token will be saved to ${store.path()}. Ctrl+C to cancel.`);
+  let timeoutHandle;
   const success2 = new Promise((resolve) => handle2.events.once("login-success", resolve));
-  const timeout = new Promise(
-    (_, reject) => setTimeout(() => reject(new Error("login timed out after 10 minutes")), TIMEOUT_MS)
-  );
+  const timeout = new Promise((_, reject) => {
+    timeoutHandle = setTimeout(
+      () => reject(new Error("login timed out after 10 minutes")),
+      TIMEOUT_MS
+    );
+  });
   try {
     await Promise.race([success2, timeout]);
   } catch (err) {
     console.error(`[kiip-mcp] ${err.message}`);
+    if (timeoutHandle) clearTimeout(timeoutHandle);
     await handle2.close();
     return 1;
   }
+  if (timeoutHandle) clearTimeout(timeoutHandle);
   console.error("[kiip-mcp] Logged in. Token saved.");
-  await new Promise((r) => setTimeout(r, 2e3));
   await handle2.close();
   return 0;
 }
@@ -31791,7 +31794,7 @@ function registerTenantTools(server, { client, session }) {
 
 // src/server.ts
 function createServer(cfg) {
-  const server = new McpServer({ name: "kiip", version: "0.2.1" });
+  const server = new McpServer({ name: "kiip", version: "0.2.2" });
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
@@ -31820,7 +31823,8 @@ async function main() {
     return 0;
   }
   if (mode === "login") {
-    return runLoginCli(process.env);
+    const code = await runLoginCli(process.env);
+    process.exit(code);
   }
   let cfg;
   try {
