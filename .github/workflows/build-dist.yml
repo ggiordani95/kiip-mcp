@@ -1,0 +1,54 @@
+name: Build dist
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/build.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip build]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Commit rebuilt dist (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet dist/; then
+            echo "dist unchanged — nothing to commit"
+          else
+            git add dist/
+            git commit -m "chore: rebuild dist [skip build]"
+            git push
+          fi
+
+      - name: Verify dist is up to date (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet dist/; then
+            echo "::error::dist/ is out of sync with src/. Run 'npm run build' locally and commit."
+            git diff --stat dist/
+            exit 1
+          fi
