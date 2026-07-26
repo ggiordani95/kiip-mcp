@@ -43,9 +43,10 @@ export async function createLoginServer(opts: LoginServerOptions): Promise<Login
         csrf,
         events,
         close: () =>
-          new Promise((resolveClose, rejectClose) =>
-            server.close((err) => (err ? rejectClose(err) : resolveClose())),
-          ),
+          new Promise((resolveClose, rejectClose) => {
+            server.closeAllConnections?.();
+            server.close((err) => (err ? rejectClose(err) : resolveClose()));
+          }),
       });
     });
   });

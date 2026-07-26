@@ -19,8 +19,7 @@ async function main(): Promise<number> {
   }
 
   if (mode === 'login') {
-    const code = await runLoginCli(process.env);
-    process.exit(code);
+    return runLoginCli(process.env);
   }
 
   let cfg;

@@ -41,6 +41,7 @@ export async function runLoginCli(env: Record<string, string | undefined>): Prom
       () => reject(new Error('login timed out after 10 minutes')),
       TIMEOUT_MS,
     );
+    timeoutHandle.unref();
   });
 
   try {
