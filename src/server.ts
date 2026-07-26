@@ -10,7 +10,7 @@ import { registerPersonTools } from './tools/persons';
 import { registerTenantTools } from './tools/tenants';
 
 export function createServer(cfg: KiipConfig): McpServer {
-  const server = new McpServer({ name: 'kiip', version: '0.2.5' });
+  const server = new McpServer({ name: 'kiip', version: '0.2.6' });
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({

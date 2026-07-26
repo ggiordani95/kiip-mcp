@@ -1,6 +1,6 @@
 {
   "name": "kiip-mcp",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Read-only MCP server for the Kiip HR platform",
   "type": "module",
   "main": "dist/index.mjs",
