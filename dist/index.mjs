@@ -23417,9 +23417,10 @@ async function createLoginServer(opts) {
         port,
         csrf,
         events,
-        close: () => new Promise(
-          (resolveClose, rejectClose) => server.close((err) => err ? rejectClose(err) : resolveClose())
-        )
+        close: () => new Promise((resolveClose, rejectClose) => {
+          server.closeAllConnections?.();
+          server.close((err) => err ? rejectClose(err) : resolveClose());
+        })
       });
     });
   });
@@ -23550,6 +23551,7 @@ async function runLoginCli(env) {
       () => reject(new Error("login timed out after 10 minutes")),
       TIMEOUT_MS
     );
+    timeoutHandle.unref();
   });
   try {
     await Promise.race([success2, timeout]);
@@ -31794,7 +31796,7 @@ function registerTenantTools(server, { client, session }) {
 
 // src/server.ts
 function createServer(cfg) {
-  const server = new McpServer({ name: "kiip", version: "0.2.3" });
+  const server = new McpServer({ name: "kiip", version: "0.2.4" });
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
@@ -31823,8 +31825,7 @@ async function main() {
     return 0;
   }
   if (mode === "login") {
-    const code = await runLoginCli(process.env);
-    process.exit(code);
+    return runLoginCli(process.env);
   }
   let cfg;
   try {
