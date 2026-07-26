@@ -2,44 +2,47 @@
 description: Log in to the Kiip platform (opens a browser).
 ---
 
-Run the Kiip login flow so the user can authenticate via a browser. The JWT is
-saved to `~/.kiip-mcp/token` and every Kiip MCP tool starts using it immediately
-(no restart needed).
+Run the Kiip login flow **in the background** so Claude stays free to answer
+other requests while the user completes the sign-in in their browser.
 
-## How to run
+## Steps
 
-Use the Bash tool **in foreground** (not background) with a long timeout
-(e.g. 600000 ms = 10 minutes) so you can wait for the browser flow to finish:
+1. Spawn the login CLI using the Bash tool with `run_in_background: true`.
+   Command:
 
-```
-node "${CLAUDE_PLUGIN_ROOT}/dist/index.mjs" login
-```
+   ```
+   node "${CLAUDE_PLUGIN_ROOT}/dist/index.mjs" login
+   ```
 
-The CLI will print a `http://127.0.0.1:<port>/?csrf=...` URL to stderr and
-open the browser. It stays running until the user submits the login form (or
-Ctrl+C).
+   The Bash tool will return a task ID immediately — do **not** wait for it.
 
-## What to tell the user
+2. Sleep ~2 seconds, then read the task's output file once to capture the URL
+   printed to stderr (line starting with `[kiip-mcp] Opening login page at`).
 
-**Before** running the command, tell the user in one sentence:
-"Opening the Kiip login page in your browser. Sign in with your Kiip
-credentials and I'll confirm when the token is saved."
+3. Tell the user (formatted, don't paste raw logs):
 
-**After** the CLI exits, inspect its output:
+   > 🌐 **Kiip login page opened in your browser.** Complete the sign-in there —
+   > I'll pick up the token automatically as soon as it's saved. No need to wait
+   > here; you can already ask me for other things.
+   >
+   > If the browser didn't open, use: `<URL>`
 
-- On success (stdout/stderr contains `Logged in. Token saved.`), reply with a
-  clear confirmation, e.g.:
+4. **Return control to the user immediately.** Do not poll, do not wait,
+   do not tail the output file. The background task will run for up to
+   10 minutes (or until the user logs in) — that's fine, it doesn't block you.
 
-  > ✅ **Kiip login successful.** Token saved to
-  > `~/.kiip-mcp/token`. You can now use tools like `list_tenants`,
-  > `list_persons`, `list_payrolls`, etc.
+## When the background task completes
 
-- On error (any other exit or an error string in the output), reply with:
+If Claude Code sends you a task-notification for this run later, briefly
+acknowledge:
 
-  > ❌ **Kiip login failed:** `<error message from CLI>`.
+- **Exit code 0** (success): reply once with:
 
-  Common causes: wrong password, backend unreachable, or `KIIP_API_BASE_URL`
-  pointing to a URL that isn't up. Help the user diagnose based on the message.
+  > ✅ **Kiip login successful.** Token saved to `~/.kiip-mcp/token`. Tools like
+  > `list_tenants`, `list_persons`, `list_payrolls` are ready to use.
 
-Always show the confirmation or error message explicitly — do not stay silent
-after the CLI exits.
+- **Non-zero exit**: reply with the error message from the output file and
+  offer to retry with `/kiip-login`.
+
+Do not surface raw `[kiip-mcp] ...` log lines to the user. The friendly
+message is enough.

@@ -1,7 +1,7 @@
 {
   "name": "kiip-mcp",
   "description": "Read-only MCP tools for the Kiip HR platform (persons, org, payroll) with in-Claude login.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "mcpServers": {
     "kiip": {
       "command": "node",
