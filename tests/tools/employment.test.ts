@@ -13,16 +13,23 @@ function stub(): { client: KiipClient; get: ReturnType<typeof vi.fn> } {
 }
 
 describe('list_employment_relationships', () => {
-  it('calls GET /employment-relationships with filters', async () => {
+  it('calls GET /employment-relationships without args by default', async () => {
     const server = makeServer();
     const { client, get } = stub();
     registerEmploymentTools(server, { client });
-    await callTool(server, 'list_employment_relationships', { personId: 'p1', page: 1 });
+    await callTool(server, 'list_employment_relationships', {});
     expect(get).toHaveBeenCalledWith('/employment-relationships', {
-      personId: 'p1',
-      status: undefined,
-      page: 1,
-      pageSize: undefined,
+      includeDeleted: undefined,
+    });
+  });
+
+  it('forwards includeDeleted as a string when provided', async () => {
+    const server = makeServer();
+    const { client, get } = stub();
+    registerEmploymentTools(server, { client });
+    await callTool(server, 'list_employment_relationships', { includeDeleted: true });
+    expect(get).toHaveBeenCalledWith('/employment-relationships', {
+      includeDeleted: 'true',
     });
   });
 });

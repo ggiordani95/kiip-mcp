@@ -152,7 +152,6 @@ export function renderLoginPage({ csrf }: { csrf: string }): string {
         <path d="M33.3987 0H29.6432C29.2976 0 29.0173 0.281859 29.0173 0.629549V4.40685C29.0173 4.75454 29.2976 5.0364 29.6432 5.0364H33.3987C33.7444 5.0364 34.0246 4.75454 34.0246 4.40685V0.629549C34.0246 0.281859 33.7444 0 33.3987 0Z" fill="#5A52E8"/>
       </svg>
     </div>
-    <h1>Entrar na plataforma</h1>
     <form id="form" novalidate>
       <label for="email">Email</label>
       <div class="field">
