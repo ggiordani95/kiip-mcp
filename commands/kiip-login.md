@@ -1,5 +1,5 @@
 ---
-description: Log in to the Kiip platform (opens a browser). Optional argument picks the environment - `local`, `dev`, or `prod` (default).
+description: Log in to the Kiip platform (opens a browser). Optional argument picks the environment - `local`, `staging`, or `prod` (default).
 ---
 
 Run the Kiip login flow **in the background** so Claude stays free to answer
@@ -12,13 +12,13 @@ Read `$ARGUMENTS` and pick the backend URL:
 | Argument | `KIIP_API_BASE_URL` | Ambiente (label mostrado ao usuário) |
 |----------|---------------------|--------------------------------------|
 | `local`  | `http://localhost:3333` | `local` |
-| `dev`    | `https://dev.kiip.com.br` (placeholder — troque pela URL real de dev) | `dev` |
+| `staging` | `https://alpha-app-api.kiip.team` | `staging` |
 | `prod` or empty | `https://api.kiip.com.br` | `prod` |
 
 Trim/lowercase `$ARGUMENTS` before matching. If the user passes anything else
-(e.g. `/kiip-login staging`), reply with:
+(e.g. `/kiip-login dev`), reply with:
 
-> ❌ Argumento inválido. Use `local`, `dev`, `prod`, ou sem argumento (prod).
+> ❌ Argumento inválido. Use `local`, `staging`, `prod`, ou sem argumento (prod).
 
 ...and do **not** spawn the CLI.
 
