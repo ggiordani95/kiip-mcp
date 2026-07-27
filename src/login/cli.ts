@@ -2,7 +2,7 @@ import { createFileTokenStore } from '../token-store';
 import { createLoginServer } from './http-server';
 import { openBrowser } from './open-browser';
 
-const DEFAULT_API_BASE_URL = 'https://api.kiip.com.br';
+const DEFAULT_API_BASE_URL = 'https://alpha-app-api.kiip.team';
 const TIMEOUT_MS = 10 * 60 * 1000;
 
 export async function runLoginCli(env: Record<string, string | undefined>): Promise<number> {

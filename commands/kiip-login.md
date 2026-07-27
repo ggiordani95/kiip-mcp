@@ -1,41 +1,22 @@
 ---
-description: Log in to the Kiip platform (opens a browser). Optional argument picks the environment - `local`, `staging`, or `prod` (default).
+description: Log in to the Kiip platform (opens a browser). Always targets staging.
 ---
 
 Run the Kiip login flow **in the background** so Claude stays free to answer
 other requests while the user completes the sign-in in their browser.
 
-## Choosing the environment
-
-Read `$ARGUMENTS` and pick the backend URL:
-
-| Argument | `KIIP_API_BASE_URL` | Ambiente (label mostrado ao usuário) |
-|----------|---------------------|--------------------------------------|
-| `local`  | `http://localhost:3333` | `local` |
-| `staging` | `https://alpha-app-api.kiip.team` | `staging` |
-| `prod` or empty | `https://api.kiip.com.br` | `prod` |
-
-Trim/lowercase `$ARGUMENTS` before matching. If the user passes anything else
-(e.g. `/kiip-login dev`), reply with:
-
-> ❌ Argumento inválido. Use `local`, `staging`, `prod`, ou sem argumento (prod).
-
-...and do **not** spawn the CLI.
+The plugin always logs in to **staging** (`https://alpha-app-api.kiip.team`).
+No arguments — ignore `$ARGUMENTS`.
 
 ## Steps
 
-1. Spawn the login CLI using the Bash tool with `run_in_background: true`.
-   Prefix the command with the chosen URL:
+1. Spawn the login CLI using the Bash tool with `run_in_background: true`:
 
    ```
-   KIIP_API_BASE_URL=<url> node "${CLAUDE_PLUGIN_ROOT}/dist/index.mjs" login
+   node "${CLAUDE_PLUGIN_ROOT}/dist/index.mjs" login
    ```
 
-   Example for `prod` (default when no argument):
-   ```
-   KIIP_API_BASE_URL=https://api.kiip.com.br node "${CLAUDE_PLUGIN_ROOT}/dist/index.mjs" login
-   ```
-
+   The CLI defaults to staging, so no `KIIP_API_BASE_URL` prefix is needed.
    The Bash tool will return a task ID immediately — do **not** wait for it.
 
 2. Sleep ~2 seconds, then read the task's output file once to capture the URL
@@ -43,7 +24,7 @@ Trim/lowercase `$ARGUMENTS` before matching. If the user passes anything else
 
 3. Tell the user (formatted, don't paste raw logs):
 
-   > 🌐 **Página de login da Kiip aberta no seu navegador** (ambiente: **`<ambiente>`**).
+   > 🌐 **Página de login da Kiip aberta no seu navegador** (staging).
    > Complete o sign-in por lá — vou pegar o token automaticamente e te confirmar aqui.
    > Pode me pedir outras coisas enquanto isso.
    >
@@ -63,7 +44,7 @@ If Claude Code sends you a task-notification for this run later:
      and take its `name` field.
   3. Reply with exactly this format (no extra text, no mention of tools):
 
-     > ✅ **Kiip login realizado com sucesso** (ambiente: **`<ambiente>`**). Token salvo em `~/.kiip-mcp/token`.
+     > ✅ **Kiip login realizado com sucesso** (staging). Token salvo em `~/.kiip-mcp/token`.
      > 🏢 Tenant ativo: **`<name>`**
 
   4. If `list_tenants` fails for any reason, omit line 3 and reply only with
@@ -73,8 +54,7 @@ If Claude Code sends you a task-notification for this run later:
 
   > ❌ **Login da Kiip falhou:** `<error message from CLI>`
   >
-  > Causas comuns: senha errada, backend inacessível, ou `KIIP_API_BASE_URL`
-  > apontando pra URL fora do ar.
+  > Causas comuns: senha errada, backend inacessível.
 
 Do not surface raw `[kiip-mcp] ...` log lines to the user. The friendly
 message is enough.

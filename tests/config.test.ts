@@ -67,9 +67,9 @@ describe('resolveConfig', () => {
 });
 
 describe('resolveConfig with token file', () => {
-  it('defaults apiBaseUrl to production when not set', () => {
+  it('defaults apiBaseUrl to staging when not set', () => {
     const cfg = resolveConfig({ KIIP_TOKEN: 'x' }, { tokenFileDir: dir });
-    expect(cfg.apiBaseUrl).toBe('https://api.kiip.com.br');
+    expect(cfg.apiBaseUrl).toBe('https://alpha-app-api.kiip.team');
   });
 
   it('reads token from file when env is missing but file exists', () => {

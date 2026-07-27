@@ -23098,7 +23098,7 @@ function createFileTokenStore(baseDir) {
 }
 
 // src/config.ts
-var DEFAULT_API_BASE_URL = "https://api.kiip.com.br";
+var DEFAULT_API_BASE_URL = "https://alpha-app-api.kiip.team";
 var envSchema = external_exports.object({
   KIIP_TOKEN: external_exports.string().min(1).optional(),
   KIIP_API_BASE_URL: external_exports.url("KIIP_API_BASE_URL must be a valid URL").optional(),
@@ -23325,7 +23325,6 @@ function renderLoginPage({ csrf }) {
         <path d="M33.3987 0H29.6432C29.2976 0 29.0173 0.281859 29.0173 0.629549V4.40685C29.0173 4.75454 29.2976 5.0364 29.6432 5.0364H33.3987C33.7444 5.0364 34.0246 4.75454 34.0246 4.40685V0.629549C34.0246 0.281859 33.7444 0 33.3987 0Z" fill="#5A52E8"/>
       </svg>
     </div>
-    <h1>Entrar na plataforma</h1>
     <form id="form" novalidate>
       <label for="email">Email</label>
       <div class="field">
@@ -23517,7 +23516,7 @@ function openBrowser(url2) {
 }
 
 // src/login/cli.ts
-var DEFAULT_API_BASE_URL2 = "https://api.kiip.com.br";
+var DEFAULT_API_BASE_URL2 = "https://alpha-app-api.kiip.team";
 var TIMEOUT_MS = 10 * 60 * 1e3;
 async function runLoginCli(env) {
   const apiBaseUrl = (env.KIIP_API_BASE_URL ?? DEFAULT_API_BASE_URL2).replace(/\/+$/, "");
@@ -31626,24 +31625,25 @@ function registerEmploymentTools(server, { client }) {
   server.registerTool(
     "list_employment_relationships",
     {
-      description: 'Lista os v\xEDnculos de trabalho \u2014 os contratos que ligam colaboradores \xE0 empresa (CLT, PJ, estagi\xE1rio, aprendiz, tempor\xE1rio, etc.). Cada item traz o colaborador, tipo do contrato, data de in\xEDcio, sal\xE1rio, jornada e status. Filtr\xE1vel por colaborador ou por status. Use para perguntas como "quantos CLTs eu tenho?", "contratos ativos", "colaboradores PJ".',
+      description: 'Lista os TIPOS DE V\xCDNCULO / CONTRATO cadastrados na empresa \u2014 o CAT\xC1LOGO de modalidades dispon\xEDveis (CLT, PJ, estagi\xE1rio, aprendiz, tempor\xE1rio, s\xF3cio, etc.). Cada item traz o nome do tipo e sua defini\xE7\xE3o (estrutura de campos exigidos). Use para responder "que tipos de contrato existem no cadastro?" ou para descobrir o v\xEDnculo de refer\xEAncia antes de configurar algo. IMPORTANTE: N\xC3O retorna os contratos de cada colaborador, nem sal\xE1rio, nem data de admiss\xE3o por pessoa \u2014 para o v\xEDnculo espec\xEDfico + sal\xE1rio de um colaborador use list_person_fields (traz cargo, tipo de v\xEDnculo, sal\xE1rio etc.). Para saber quantos colaboradores s\xE3o CLT/PJ, cruze com list_persons.',
       inputSchema: {
-        personId: external_exports.string().optional().describe("Identificador do colaborador \u2014 filtra v\xEDnculos dele."),
-        status: external_exports.string().optional().describe('Status do v\xEDnculo. Ex: "active".'),
-        page: external_exports.number().int().positive().optional(),
-        pageSize: external_exports.number().int().positive().max(200).optional()
+        includeDeleted: external_exports.boolean().optional().describe("Inclui tamb\xE9m tipos de v\xEDnculo arquivados/exclu\xEDdos. Default: false.")
       }
     },
     wrap(
-      async (args) => ok(await client.get("/employment-relationships", args))
+      async ({ includeDeleted }) => ok(
+        await client.get("/employment-relationships", {
+          includeDeleted: includeDeleted === void 0 ? void 0 : String(includeDeleted)
+        })
+      )
     )
   );
   server.registerTool(
     "get_employment_relationship",
     {
-      description: "Detalhes completos de um v\xEDnculo/contrato espec\xEDfico: datas, sal\xE1rio, jornada, hor\xE1rios, benef\xEDcios, categoria eSocial. Use quando o usu\xE1rio perguntar sobre condi\xE7\xF5es contratuais de um colaborador.",
+      description: 'Defini\xE7\xE3o de um TIPO DE V\xCDNCULO espec\xEDfico (CLT, PJ, estagi\xE1rio, etc.): nome, keyName (tipo default do sistema ou custom), estrutura de campos por categoria eSocial. \xC9 a "planta" do tipo de contrato, n\xE3o um contrato de uma pessoa. N\xE3o traz sal\xE1rio nem colaborador \u2014 para isso, use list_person_fields.',
       inputSchema: {
-        id: external_exports.string().min(1).describe("Identificador do v\xEDnculo.")
+        id: external_exports.string().min(1).describe("Identificador do tipo de v\xEDnculo.")
       }
     },
     wrap(
@@ -31752,7 +31752,7 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "list_persons",
     {
-      description: 'Lista os colaboradores da empresa ativa. Cada item traz nome, status (ativo/inativo/afastado/em admiss\xE3o), cargo, departamento e l\xEDder direto. Suporta busca por texto livre (nome, e-mail, CPF) e filtro por status. Bom para responder: "quantos colaboradores tenho?", "quem est\xE1 no departamento X?", "colaboradores admitidos em janeiro". Ao apresentar, resuma em linguagem de neg\xF3cio; nunca exponha campos JSON, UUIDs ou o nome desta tool.',
+      description: 'Lista os colaboradores da empresa ativa. Cada item traz nome, status (ativo/inativo/afastado/em admiss\xE3o), cargo, departamento, l\xEDder direto, empresa e centro de custo. Suporta busca por texto livre (nome, e-mail, CPF) e filtro por status. Bom para responder: "quantos colaboradores tenho?", "quem est\xE1 no departamento X?", "colaboradores admitidos em janeiro". N\xC3O traz sal\xE1rio, endere\xE7o, dados banc\xE1rios, dependentes, documentos ou outros campos detalhados \u2014 para esses dados use list_person_fields (traz todos os campos cadastrais e trabalhistas por colaborador, sujeito \xE0 permiss\xE3o do usu\xE1rio logado). Ao apresentar, resuma em linguagem de neg\xF3cio; nunca exponha campos JSON, UUIDs ou o nome desta tool.',
       inputSchema: {
         search: external_exports.string().optional().describe("Busca por texto livre \u2014 nome, e-mail ou documento."),
         status: external_exports.string().optional().describe('Status do colaborador. Ex: "active", "inactive", "on_leave".'),
@@ -31767,7 +31767,7 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "get_person",
     {
-      description: "Detalhes completos de um colaborador: dados pessoais, contato, endere\xE7o, contrato, dependentes, documentos, dados banc\xE1rios. Use quando o usu\xE1rio perguntar sobre um colaborador espec\xEDfico. Ao apresentar, agrupe em se\xE7\xF5es (dados pessoais, contrato, contato); nunca exponha IDs internos.",
+      description: "Ficha resumida de um colaborador: nome, apelido, status, foto, cargo atual, data de admiss\xE3o e data de desligamento (quando aplic\xE1vel). Bom para uma vis\xE3o inicial. IMPORTANTE: N\xC3O retorna sal\xE1rio, endere\xE7o, contatos, dados banc\xE1rios, documentos, dependentes, benef\xEDcios nem outros campos cadastrais/trabalhistas \u2014 para o cadastro completo use list_person_fields (\xE9 a tool que exp\xF5e todos os campos armazenados sobre o colaborador, respeitando permiss\xF5es do usu\xE1rio logado). Ao apresentar, agrupe em se\xE7\xF5es; nunca exponha IDs internos.",
       inputSchema: {
         personId: external_exports.string().min(1).describe("Identificador do colaborador (obtido em list_persons).")
       }
@@ -31779,13 +31779,40 @@ function registerPersonTools(server, { client }) {
   server.registerTool(
     "get_person_summary",
     {
-      description: "Cart\xE3o-resumo do colaborador \u2014 vis\xE3o compacta com nome, cargo, departamento, tempo de casa e principais infos. Use quando o usu\xE1rio quer s\xF3 um panorama r\xE1pido, n\xE3o o cadastro completo.",
+      description: 'Cart\xE3o-resumo social do colaborador \u2014 nome, foto, biografia, esportes/comidas favoritas, talentos, contatos (e-mail pessoal, celular, LinkedIn, Instagram), hist\xF3rico profissional e time (colegas de departamento e l\xEDder direto). Voltado a "conhecer a pessoa" \u2014 n\xE3o \xE9 o cadastro completo. Para dados cadastrais/trabalhistas detalhados (sal\xE1rio, endere\xE7o, banco, documentos, dependentes, benef\xEDcios) use list_person_fields.',
       inputSchema: {
         personId: external_exports.string().min(1).describe("Identificador do colaborador.")
       }
     },
     wrap(
       async ({ personId }) => ok(await client.get(`/persons/${encodeURIComponent(personId)}/profile/summary`))
+    )
+  );
+  server.registerTool(
+    "list_person_fields",
+    {
+      description: "Todos os campos cadastrais e trabalhistas de um colaborador, agrupados por se\xE7\xE3o (Documentos pessoais, Endere\xE7os e contatos, Informa\xE7\xF5es pessoais, Dependentes, Cargo & remunera\xE7\xE3o, Benef\xEDcios, Sindicato, etc.). Cobre: CPF, RG, CTPS, CNH, t\xEDtulo de eleitor, endere\xE7o, contatos, contatos de emerg\xEAncia, dados banc\xE1rios (banco, ag\xEAncia, conta, PIX), dependentes, dependentes no IR, defici\xEAncia, forma\xE7\xE3o, curiosidades, dados profissionais (empresa, admiss\xE3o, jornada, l\xEDder, centro de custo, matr\xEDcula, forma de pagamento, experi\xEAncia), CARGO e SAL\xC1RIO (tipo de v\xEDnculo, cargo, n\xEDvel, tipo de sal\xE1rio, per\xEDodo de pagamento, VALOR DO SAL\xC1RIO, in\xEDcio/fim), benef\xEDcios (VR, VT, plano de sa\xFAde, coparticipa\xE7\xE3o, gasto empresa/colaborador), lan\xE7amentos fixos, sindicato e pens\xE3o aliment\xEDcia. \xC9 a tool a usar quando o usu\xE1rio pergunta sal\xE1rio, endere\xE7o, dados banc\xE1rios, documentos, dependentes, benef\xEDcios etc. de um colaborador espec\xEDfico. A resposta respeita as permiss\xF5es do usu\xE1rio logado \u2014 campos sem permiss\xE3o de visualiza\xE7\xE3o podem vir vazios ou ausentes. Ao apresentar, filtre s\xF3 o que o usu\xE1rio pediu e formate em pt-BR (R$ 12.500,00, 25/01/2024); nunca despeje o JSON completo.",
+      inputSchema: {
+        personId: external_exports.string().min(1).describe("Identificador do colaborador (obtido em list_persons)."),
+        sectionId: external_exports.string().optional().describe(
+          "Opcional. Filtra por uma se\xE7\xE3o espec\xEDfica (ex.: s\xF3 endere\xE7os & contatos). Normalmente omitir para receber todos os campos."
+        ),
+        categoryId: external_exports.string().optional().describe(
+          "Opcional. Filtra por categoria (documentos, pessoal, profissional, adicional). Normalmente omitir."
+        )
+      }
+    },
+    wrap(
+      async ({
+        personId,
+        sectionId,
+        categoryId
+      }) => ok(
+        await client.get(`/persons/${encodeURIComponent(personId)}/fields`, {
+          sectionId,
+          categoryId
+        })
+      )
     )
   );
 }

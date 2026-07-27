@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ConfigurationError } from './http/errors';
 import { createFileTokenStore } from './token-store';
 
-const DEFAULT_API_BASE_URL = 'https://api.kiip.com.br';
+const DEFAULT_API_BASE_URL = 'https://alpha-app-api.kiip.team';
 
 const envSchema = z.object({
   KIIP_TOKEN: z.string().min(1).optional(),

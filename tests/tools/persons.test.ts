@@ -49,3 +49,33 @@ describe('get_person_summary', () => {
     expect(get).toHaveBeenCalledWith('/persons/p1/profile/summary');
   });
 });
+
+describe('list_person_fields', () => {
+  it('calls GET /persons/:id/fields without filters by default', async () => {
+    const server = makeServer();
+    const get = vi.fn().mockResolvedValue([]);
+    registerPersonTools(server, { client: stubClient(get) });
+
+    await callTool(server, 'list_person_fields', { personId: 'p1' });
+    expect(get).toHaveBeenCalledWith('/persons/p1/fields', {
+      sectionId: undefined,
+      categoryId: undefined,
+    });
+  });
+
+  it('forwards sectionId and categoryId when provided', async () => {
+    const server = makeServer();
+    const get = vi.fn().mockResolvedValue([]);
+    registerPersonTools(server, { client: stubClient(get) });
+
+    await callTool(server, 'list_person_fields', {
+      personId: 'p1',
+      sectionId: 'sec1',
+      categoryId: 'cat1',
+    });
+    expect(get).toHaveBeenCalledWith('/persons/p1/fields', {
+      sectionId: 'sec1',
+      categoryId: 'cat1',
+    });
+  });
+});

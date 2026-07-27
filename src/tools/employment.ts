@@ -15,24 +15,20 @@ export function registerEmploymentTools(
     'list_employment_relationships',
     {
       description:
-        'Lista os vínculos de trabalho — os contratos que ligam colaboradores à empresa (CLT, PJ, estagiário, aprendiz, temporário, etc.). Cada item traz o colaborador, tipo do contrato, data de início, salário, jornada e status. Filtrável por colaborador ou por status. Use para perguntas como "quantos CLTs eu tenho?", "contratos ativos", "colaboradores PJ".',
+        'Lista os TIPOS DE VÍNCULO / CONTRATO cadastrados na empresa — o CATÁLOGO de modalidades disponíveis (CLT, PJ, estagiário, aprendiz, temporário, sócio, etc.). Cada item traz o nome do tipo e sua definição (estrutura de campos exigidos). Use para responder "que tipos de contrato existem no cadastro?" ou para descobrir o vínculo de referência antes de configurar algo. IMPORTANTE: NÃO retorna os contratos de cada colaborador, nem salário, nem data de admissão por pessoa — para o vínculo específico + salário de um colaborador use list_person_fields (traz cargo, tipo de vínculo, salário etc.). Para saber quantos colaboradores são CLT/PJ, cruze com list_persons.',
       inputSchema: {
-        personId: z
-          .string()
+        includeDeleted: z
+          .boolean()
           .optional()
-          .describe('Identificador do colaborador — filtra vínculos dele.'),
-        status: z.string().optional().describe('Status do vínculo. Ex: "active".'),
-        page: z.number().int().positive().optional(),
-        pageSize: z.number().int().positive().max(200).optional(),
+          .describe('Inclui também tipos de vínculo arquivados/excluídos. Default: false.'),
       },
     },
-    wrap(
-      async (args: {
-        personId?: string;
-        status?: string;
-        page?: number;
-        pageSize?: number;
-      }) => ok(await client.get('/employment-relationships', args)),
+    wrap(async ({ includeDeleted }: { includeDeleted?: boolean }) =>
+      ok(
+        await client.get('/employment-relationships', {
+          includeDeleted: includeDeleted === undefined ? undefined : String(includeDeleted),
+        }),
+      ),
     ),
   );
 
@@ -40,9 +36,9 @@ export function registerEmploymentTools(
     'get_employment_relationship',
     {
       description:
-        'Detalhes completos de um vínculo/contrato específico: datas, salário, jornada, horários, benefícios, categoria eSocial. Use quando o usuário perguntar sobre condições contratuais de um colaborador.',
+        'Definição de um TIPO DE VÍNCULO específico (CLT, PJ, estagiário, etc.): nome, keyName (tipo default do sistema ou custom), estrutura de campos por categoria eSocial. É a "planta" do tipo de contrato, não um contrato de uma pessoa. Não traz salário nem colaborador — para isso, use list_person_fields.',
       inputSchema: {
-        id: z.string().min(1).describe('Identificador do vínculo.'),
+        id: z.string().min(1).describe('Identificador do tipo de vínculo.'),
       },
     },
     wrap(async ({ id }: { id: string }) =>

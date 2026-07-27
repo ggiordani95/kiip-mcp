@@ -9,10 +9,10 @@ if (existsSync(file)) process.exit(0);
 
 const content = [
   '---',
-  'description: Log in to the Kiip platform. Optional argument - local, dev, prod (default). Shortcut for /kiip-mcp:kiip-login.',
+  'description: Log in to the Kiip platform (staging). Shortcut for /kiip-mcp:kiip-login.',
   '---',
   '',
-  'Invoque a skill `kiip-mcp:kiip-login` usando a ferramenta Skill, passando `$ARGUMENTS` como argumento. Não reimplemente a lógica — apenas delegue para a skill do plugin, que sabe interpretar `local`, `dev`, `prod` ou vazio.',
+  'Invoque a skill `kiip-mcp:kiip-login` usando a ferramenta Skill. O login sempre aponta pra staging — não passe argumentos.',
   '',
 ].join('\n');
 
