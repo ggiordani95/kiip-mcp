@@ -3,7 +3,7 @@ import { createServer } from '../src/server';
 import { getTool } from './tools/_helpers';
 
 describe('createServer', () => {
-  it('returns an McpServer with all 15 tools registered', () => {
+  it('returns an McpServer with all 17 tools registered', () => {
     const server = createServer({
       apiBaseUrl: 'https://api.kiip.test',
       token: 'jwt',
@@ -16,6 +16,7 @@ describe('createServer', () => {
       'list_persons',
       'get_person',
       'get_person_summary',
+      'list_person_fields',
       'list_departments',
       'list_cost_centers',
       'list_localities',
@@ -26,6 +27,8 @@ describe('createServer', () => {
       'get_payroll',
       'list_payroll_events',
       'list_scheduled_entries',
+      'get_module_docs',
+      'get_playbook',
     ];
 
     for (const name of expected) {
