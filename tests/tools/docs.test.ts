@@ -31,3 +31,23 @@ describe('get_module_docs', () => {
     });
   });
 });
+
+describe('get_playbook', () => {
+  it('calls GET /mcp/docs/playbooks/:slug and returns the content field as text', async () => {
+    const server = makeServer();
+    const get = vi.fn().mockResolvedValue({
+      slug: 'ativacao-ponto',
+      title: 'Ativação do Ponto',
+      content: '# Ativação\n\nPasso a passo.',
+      updatedAt: '2026-07-29T00:00:00Z',
+    });
+    registerDocsTools(server, { client: stubClient(get) });
+
+    const result = await callTool(server, 'get_playbook', { slug: 'ativacao-ponto' });
+
+    expect(get).toHaveBeenCalledWith('/mcp/docs/playbooks/ativacao-ponto');
+    expect(result).toEqual({
+      content: [{ type: 'text', text: '# Ativação\n\nPasso a passo.' }],
+    });
+  });
+});
