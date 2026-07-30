@@ -31492,6 +31492,43 @@ var EMPTY_COMPLETION_RESULT = {
   }
 };
 
+// src/constants/kiip-docs.ts
+var KIIP_MODULE_SLUGS = [
+  "diretorio",
+  "entidades",
+  "usuarios-e-acessos",
+  "ferias",
+  "ponto",
+  "admissoes",
+  "processos",
+  "documentos",
+  "folha",
+  "relatorios",
+  "downloads",
+  "lembretes"
+];
+var KIIP_PLAYBOOK_SLUGS = [
+  "implantacao",
+  "ativacao-ponto",
+  "regularizacao-ferias",
+  "atualizacao-em-massa",
+  "grupos-de-acesso",
+  "relatorios-rh"
+];
+var KIIP_INSTRUCTIONS = `A Kiip \xE9 uma plataforma SaaS de Departamento Pessoal que digitaliza os processos de gest\xE3o de pessoas do onboarding ao desligamento, com foco nos processos que impactam a folha de pagamento. Suporta colaboradores de m\xFAltiplos v\xEDnculos (CLT, PJ, RPA e outros) e m\xFAltiplas empresas (CNPJs) em uma mesma conta.
+
+Antes de orientar o usu\xE1rio ou executar tarefas sobre um m\xF3dulo, chame o tool de documenta\xE7\xE3o correspondente. N\xE3o presuma comportamento do sistema \u2014 a documenta\xE7\xE3o \xE9 a fonte de verdade.
+
+M\xF3dulos (chame get_module_docs com o slug):
+- ${KIIP_MODULE_SLUGS.join(", ")}
+
+Playbooks operacionais (chame get_playbook com o slug):
+- ${KIIP_PLAYBOOK_SLUGS.join(", ")}
+
+Para gerar qualquer relat\xF3rio ou an\xE1lise de RH, consulte sempre o playbook "relatorios-rh" antes.
+
+Limites de escopo: a Kiip n\xE3o processa folha (INSS/IRRF ficam com a contabilidade). A Kiip n\xE3o \xE9 consultoria jur\xEDdica \u2014 para casos trabalhistas lim\xEDtrofes, oriente o usu\xE1rio a consultar a contabilidade ou um advogado trabalhista.`;
+
 // src/http/kiip-client.ts
 function createKiipClient(opts) {
   return {
@@ -31606,6 +31643,9 @@ function createSessionStore(initialToken, store) {
 function ok(data) {
   return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
 }
+function okText(text) {
+  return { content: [{ type: "text", text }] };
+}
 function wrap(fn) {
   return async (args) => {
     try {
@@ -31618,6 +31658,39 @@ function wrap(fn) {
       return { isError: true, content: [{ type: "text", text: `Unexpected error: ${message}` }] };
     }
   };
+}
+
+// src/tools/docs.ts
+function registerDocsTools(server, { client }) {
+  const cache = /* @__PURE__ */ new Map();
+  async function fetchDoc(kind, slug) {
+    const key = `${kind}:${slug}`;
+    const cached2 = cache.get(key);
+    if (cached2 !== void 0) return cached2;
+    const data = await client.get(`/mcp/docs/${kind}/${encodeURIComponent(slug)}`);
+    cache.set(key, data.content);
+    return data.content;
+  }
+  server.registerTool(
+    "get_module_docs",
+    {
+      description: "Retorna a documenta\xE7\xE3o completa (markdown) de um m\xF3dulo da Kiip. Chame este tool antes de responder qualquer pergunta espec\xEDfica sobre um m\xF3dulo \u2014 a documenta\xE7\xE3o \xE9 a fonte de verdade. Slugs v\xE1lidos: " + KIIP_MODULE_SLUGS.join(", ") + ".",
+      inputSchema: {
+        slug: external_exports.enum(KIIP_MODULE_SLUGS).describe('Slug do m\xF3dulo (ex.: "folha", "ponto", "ferias").')
+      }
+    },
+    wrap(async ({ slug }) => okText(await fetchDoc("modules", slug)))
+  );
+  server.registerTool(
+    "get_playbook",
+    {
+      description: "Retorna o playbook operacional completo (markdown) \u2014 sequ\xEAncia de passos, cuidados e checklist para opera\xE7\xF5es cr\xEDticas da Kiip. Chame este tool ANTES de guiar o usu\xE1rio em qualquer fluxo operacional (implanta\xE7\xE3o, ativa\xE7\xE3o de ponto, regulariza\xE7\xE3o de f\xE9rias, atualiza\xE7\xF5es em massa, configura\xE7\xE3o de grupos de acesso ou gera\xE7\xE3o de relat\xF3rios de RH). Slugs v\xE1lidos: " + KIIP_PLAYBOOK_SLUGS.join(", ") + ".",
+      inputSchema: {
+        slug: external_exports.enum(KIIP_PLAYBOOK_SLUGS).describe('Slug do playbook (ex.: "ativacao-ponto", "relatorios-rh").')
+      }
+    },
+    wrap(async ({ slug }) => okText(await fetchDoc("playbooks", slug)))
+  );
 }
 
 // src/tools/employment.ts
@@ -31847,7 +31920,10 @@ function registerTenantTools(server, { client, session }) {
 
 // src/server.ts
 function createServer(cfg) {
-  const server = new McpServer({ name: "kiip", version: "0.2.7" });
+  const server = new McpServer(
+    { name: "kiip", version: "0.3.1" },
+    { instructions: KIIP_INSTRUCTIONS }
+  );
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
@@ -31860,6 +31936,7 @@ function createServer(cfg) {
   registerOrgStructureTools(server, { client });
   registerEmploymentTools(server, { client });
   registerPayrollTools(server, { client });
+  registerDocsTools(server, { client });
   return server;
 }
 
