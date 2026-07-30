@@ -13,7 +13,7 @@ import { registerTenantTools } from './tools/tenants';
 
 export function createServer(cfg: KiipConfig): McpServer {
   const server = new McpServer(
-    { name: 'kiip', version: '0.3.1' },
+    { name: 'kiip', version: '0.3.2' },
     { instructions: KIIP_INSTRUCTIONS },
   );
   const tokenStore = createFileTokenStore();
