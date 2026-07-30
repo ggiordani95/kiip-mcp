@@ -15,7 +15,20 @@ interface DocResponse {
   updatedAt: string;
 }
 
+type DocKind = 'modules' | 'playbooks';
+
 export function registerDocsTools(server: McpServer, { client }: DocsToolsDeps): void {
+  const cache = new Map<string, string>();
+
+  async function fetchDoc(kind: DocKind, slug: string): Promise<string> {
+    const key = `${kind}:${slug}`;
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
+    const data = await client.get<DocResponse>(`/mcp/docs/${kind}/${encodeURIComponent(slug)}`);
+    cache.set(key, data.content);
+    return data.content;
+  }
+
   server.registerTool(
     'get_module_docs',
     {
@@ -29,10 +42,7 @@ export function registerDocsTools(server: McpServer, { client }: DocsToolsDeps):
           .describe('Slug do módulo (ex.: "folha", "ponto", "ferias").'),
       },
     },
-    wrap(async ({ slug }: { slug: string }) => {
-      const data = await client.get<DocResponse>(`/mcp/docs/modules/${encodeURIComponent(slug)}`);
-      return okText(data.content);
-    }),
+    wrap(async ({ slug }: { slug: string }) => okText(await fetchDoc('modules', slug))),
   );
 
   server.registerTool(
@@ -48,9 +58,6 @@ export function registerDocsTools(server: McpServer, { client }: DocsToolsDeps):
           .describe('Slug do playbook (ex.: "ativacao-ponto", "relatorios-rh").'),
       },
     },
-    wrap(async ({ slug }: { slug: string }) => {
-      const data = await client.get<DocResponse>(`/mcp/docs/playbooks/${encodeURIComponent(slug)}`);
-      return okText(data.content);
-    }),
+    wrap(async ({ slug }: { slug: string }) => okText(await fetchDoc('playbooks', slug))),
   );
 }

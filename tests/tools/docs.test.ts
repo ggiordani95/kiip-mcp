@@ -51,3 +51,42 @@ describe('get_playbook', () => {
     });
   });
 });
+
+describe('docs cache', () => {
+  it('reuses the response for a repeated get_module_docs call', async () => {
+    const server = makeServer();
+    const get = vi.fn().mockResolvedValue({
+      slug: 'folha',
+      title: 'Folha',
+      content: '# Folha',
+      updatedAt: '2026-07-29T00:00:00Z',
+    });
+    registerDocsTools(server, { client: stubClient(get) });
+
+    await callTool(server, 'get_module_docs', { slug: 'folha' });
+    await callTool(server, 'get_module_docs', { slug: 'folha' });
+
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('module and playbook calls hit different endpoints (cache is namespaced by kind)', async () => {
+    const server = makeServer();
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({ slug: 'ferias', title: 'M', content: '# M', updatedAt: '' })
+      .mockResolvedValueOnce({
+        slug: 'regularizacao-ferias',
+        title: 'P',
+        content: '# P',
+        updatedAt: '',
+      });
+    registerDocsTools(server, { client: stubClient(get) });
+
+    await callTool(server, 'get_module_docs', { slug: 'ferias' });
+    await callTool(server, 'get_playbook', { slug: 'regularizacao-ferias' });
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenNthCalledWith(1, '/mcp/docs/modules/ferias');
+    expect(get).toHaveBeenNthCalledWith(2, '/mcp/docs/playbooks/regularizacao-ferias');
+  });
+});
