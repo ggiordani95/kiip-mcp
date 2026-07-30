@@ -10,6 +10,10 @@ export function ok(data: unknown): ToolResult {
   return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
 }
 
+export function okText(text: string): ToolResult {
+  return { content: [{ type: 'text', text }] };
+}
+
 export function wrap<TArgs>(
   fn: (args: TArgs) => Promise<ToolResult>,
 ): (args: TArgs) => Promise<ToolResult> {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ok, wrap } from '../../src/tools/helpers';
+import { ok, okText, wrap } from '../../src/tools/helpers';
 import { KiipMcpError, UnauthorizedError } from '../../src/http/errors';
 
 describe('ok', () => {
@@ -44,5 +44,14 @@ describe('wrap', () => {
     const result = await handler({});
     expect(result.isError).toBe(true);
     expect(result.content[0]!.text).toBe('hi');
+  });
+});
+
+describe('okText', () => {
+  it('returns raw text without JSON.stringify', () => {
+    const result = okText('# Title\n\nBody');
+    expect(result).toEqual({
+      content: [{ type: 'text', text: '# Title\n\nBody' }],
+    });
   });
 });
