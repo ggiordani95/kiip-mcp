@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { ConfigurationError } from './http/errors';
-import { createFileTokenStore } from './token-store';
+import { createFileTokenStore, type TokenStore } from './token-store';
 
 const DEFAULT_API_BASE_URL = 'https://alpha-app-api.kiip.team';
+const DEFAULT_TIMEOUT_MS = 15000;
+const TRAILING_SLASHES = /\/+$/;
 
 const envSchema = z.object({
   KIIP_TOKEN: z.string().min(1).optional(),
@@ -11,8 +13,9 @@ const envSchema = z.object({
 });
 
 export interface KiipConfig {
-  token: string;
+  token?: string;
   apiBaseUrl: string;
+  apiBaseUrlOverride?: string;
   timeoutMs: number;
 }
 
@@ -30,25 +33,25 @@ export function resolveConfig(
     throw new ConfigurationError(`Invalid kiip-mcp configuration: ${message}`);
   }
 
-  const store = createFileTokenStore(opts.tokenFileDir);
-  const stored = store.read();
+  const stored = createFileTokenStore(opts.tokenFileDir).read();
+  const override = parsed.data.KIIP_API_BASE_URL;
 
   const token = parsed.data.KIIP_TOKEN ?? stored?.token;
-  if (!token) {
-    throw new ConfigurationError(
-      'No Kiip token found. Run `/kiip-login` in Claude Code to authenticate, or set KIIP_TOKEN in your env.',
-    );
-  }
+  const apiBaseUrl = withoutTrailingSlash(
+    override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL,
+  );
+  const apiBaseUrlOverride = override ? withoutTrailingSlash(override) : undefined;
+  const timeoutMs = parsed.data.KIIP_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS;
 
-  const apiBaseUrl = (
-    parsed.data.KIIP_API_BASE_URL ??
-    stored?.apiBaseUrl ??
-    DEFAULT_API_BASE_URL
-  ).replace(/\/+$/, '');
+  return { token, apiBaseUrl, apiBaseUrlOverride, timeoutMs };
+}
 
-  return {
-    token,
-    apiBaseUrl,
-    timeoutMs: parsed.data.KIIP_TIMEOUT_MS ?? 15000,
-  };
+export function currentApiBaseUrl(cfg: KiipConfig, store: TokenStore): string {
+  if (cfg.apiBaseUrlOverride) return cfg.apiBaseUrlOverride;
+  const stored = store.read()?.apiBaseUrl;
+  return stored ? withoutTrailingSlash(stored) : cfg.apiBaseUrl;
+}
+
+function withoutTrailingSlash(url: string): string {
+  return url.replace(TRAILING_SLASHES, '');
 }

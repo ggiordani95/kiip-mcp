@@ -13,7 +13,7 @@ export interface KiipClient {
 }
 
 export interface KiipClientOptions {
-  apiBaseUrl: string;
+  apiBaseUrl: () => string;
   timeoutMs: number;
   session: SessionStore;
 }
@@ -32,7 +32,7 @@ async function request<T>(
   body: unknown,
   query?: Record<string, string | number | undefined>,
 ): Promise<T> {
-  const url = buildUrl(opts.apiBaseUrl, path, query);
+  const url = buildUrl(opts.apiBaseUrl(), path, query);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
 

@@ -7,7 +7,7 @@ const baseUrl = 'https://api.kiip.test';
 
 function makeClient(token = 'jwt-1') {
   const session = createSessionStore(token);
-  const client = createKiipClient({ apiBaseUrl: baseUrl, timeoutMs: 5000, session });
+  const client = createKiipClient({ apiBaseUrl: () => baseUrl, timeoutMs: 5000, session });
   return { client, session };
 }
 

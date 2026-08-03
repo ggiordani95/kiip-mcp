@@ -23043,8 +23043,13 @@ var KiipMcpError = class extends Error {
 };
 var ConfigurationError = class extends KiipMcpError {
 };
+var NotAuthenticatedError = class extends KiipMcpError {
+  constructor(message = "Not logged in to Kiip. Run `/kiip-login` in Claude Code to authenticate, or set KIIP_TOKEN in your env.", options) {
+    super(message, options);
+  }
+};
 var UnauthorizedError = class extends KiipMcpError {
-  constructor(message = "Kiip token expired or invalid. Log in again on the Kiip UI, copy the new JWT, update the KIIP_TOKEN env in your MCP client and restart it.", options) {
+  constructor(message = "Kiip session expired or invalid. Run `/kiip-login` in Claude Code to log in again.", options) {
     super(message, options);
   }
 };
@@ -23099,6 +23104,8 @@ function createFileTokenStore(baseDir) {
 
 // src/config.ts
 var DEFAULT_API_BASE_URL = "https://alpha-app-api.kiip.team";
+var DEFAULT_TIMEOUT_MS = 15e3;
+var TRAILING_SLASHES = /\/+$/;
 var envSchema = external_exports.object({
   KIIP_TOKEN: external_exports.string().min(1).optional(),
   KIIP_API_BASE_URL: external_exports.url("KIIP_API_BASE_URL must be a valid URL").optional(),
@@ -23110,20 +23117,23 @@ function resolveConfig(env, opts = {}) {
     const message = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new ConfigurationError(`Invalid kiip-mcp configuration: ${message}`);
   }
-  const store = createFileTokenStore(opts.tokenFileDir);
-  const stored = store.read();
+  const stored = createFileTokenStore(opts.tokenFileDir).read();
+  const override = parsed.data.KIIP_API_BASE_URL;
   const token = parsed.data.KIIP_TOKEN ?? stored?.token;
-  if (!token) {
-    throw new ConfigurationError(
-      "No Kiip token found. Run `/kiip-login` in Claude Code to authenticate, or set KIIP_TOKEN in your env."
-    );
-  }
-  const apiBaseUrl = (parsed.data.KIIP_API_BASE_URL ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
-  return {
-    token,
-    apiBaseUrl,
-    timeoutMs: parsed.data.KIIP_TIMEOUT_MS ?? 15e3
-  };
+  const apiBaseUrl = withoutTrailingSlash(
+    override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL
+  );
+  const apiBaseUrlOverride = override ? withoutTrailingSlash(override) : void 0;
+  const timeoutMs = parsed.data.KIIP_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS;
+  return { token, apiBaseUrl, apiBaseUrlOverride, timeoutMs };
+}
+function currentApiBaseUrl(cfg, store) {
+  if (cfg.apiBaseUrlOverride) return cfg.apiBaseUrlOverride;
+  const stored = store.read()?.apiBaseUrl;
+  return stored ? withoutTrailingSlash(stored) : cfg.apiBaseUrl;
+}
+function withoutTrailingSlash(url2) {
+  return url2.replace(TRAILING_SLASHES, "");
 }
 
 // src/login/http-server.ts
@@ -31537,7 +31547,7 @@ function createKiipClient(opts) {
   };
 }
 async function request(opts, method, path, body, query) {
-  const url2 = buildUrl(opts.apiBaseUrl, path, query);
+  const url2 = buildUrl(opts.apiBaseUrl(), path, query);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
   try {
@@ -31615,11 +31625,9 @@ function createSessionStore(initialToken, store) {
   let current = initialToken;
   return {
     getToken: () => {
-      if (store) {
-        const stored = store.read();
-        if (stored) return stored.token;
-      }
-      return current;
+      const token = store?.read()?.token ?? current;
+      if (!token) throw new NotAuthenticatedError();
+      return token;
     },
     setToken: (token) => {
       if (!token) {
@@ -31921,13 +31929,13 @@ function registerTenantTools(server, { client, session }) {
 // src/server.ts
 function createServer(cfg) {
   const server = new McpServer(
-    { name: "kiip", version: "0.3.2" },
+    { name: "kiip", version: "0.3.3" },
     { instructions: KIIP_INSTRUCTIONS }
   );
   const tokenStore = createFileTokenStore();
   const session = createSessionStore(cfg.token, tokenStore);
   const client = createKiipClient({
-    apiBaseUrl: cfg.apiBaseUrl,
+    apiBaseUrl: () => currentApiBaseUrl(cfg, tokenStore),
     timeoutMs: cfg.timeoutMs,
     session
   });
@@ -31968,6 +31976,9 @@ async function main() {
   const server = createServer(cfg);
   await server.connect(new StdioServerTransport());
   console.error(`[kiip-mcp] ready (base: ${cfg.apiBaseUrl})`);
+  if (!cfg.token) {
+    console.error("[kiip-mcp] not logged in yet \u2014 run `/kiip-login` in Claude Code to authenticate.");
+  }
   return 0;
 }
 main().then(

@@ -35,6 +35,9 @@ async function main(): Promise<number> {
   const server = createServer(cfg);
   await server.connect(new StdioServerTransport());
   console.error(`[kiip-mcp] ready (base: ${cfg.apiBaseUrl})`);
+  if (!cfg.token) {
+    console.error('[kiip-mcp] not logged in yet — run `/kiip-login` in Claude Code to authenticate.');
+  }
   return 0;
 }
 

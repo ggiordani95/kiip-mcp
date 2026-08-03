@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { NotAuthenticatedError } from '../src/http/errors';
 import { createSessionStore } from '../src/session';
 import type { StoredToken, TokenStore } from '../src/token-store';
 
@@ -37,6 +38,13 @@ describe('createSessionStore with TokenStore', () => {
     const store = inMemoryStore({ token: 'from-file', apiBaseUrl: 'x', updatedAt: 't' });
     const s = createSessionStore('from-env', store);
     expect(s.getToken()).toBe('from-file');
+  });
+
+  it('throws a login hint when there is no token anywhere', () => {
+    const store = inMemoryStore(null);
+    const s = createSessionStore(undefined, store);
+    expect(() => s.getToken()).toThrow(NotAuthenticatedError);
+    expect(() => s.getToken()).toThrow(/kiip-login/);
   });
 
   it('falls back to initialToken when store returns null', () => {

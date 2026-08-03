@@ -2,8 +2,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { resolveConfig } from '../src/config';
+import { currentApiBaseUrl, resolveConfig } from '../src/config';
 import { ConfigurationError } from '../src/http/errors';
+import { createFileTokenStore } from '../src/token-store';
 
 let dir: string;
 
@@ -97,8 +98,28 @@ describe('resolveConfig with token file', () => {
     expect(cfg.token).toBe('env');
   });
 
-  it('throws with /kiip-login hint when neither env nor file is available', () => {
-    expect(() => resolveConfig({}, { tokenFileDir: dir })).toThrow(ConfigurationError);
-    expect(() => resolveConfig({}, { tokenFileDir: dir })).toThrow(/kiip-login/);
+  it('returns config without a token when neither env nor file is available', () => {
+    const cfg = resolveConfig({}, { tokenFileDir: dir });
+    expect(cfg.token).toBeUndefined();
+    expect(cfg.apiBaseUrl).toBe('https://alpha-app-api.kiip.team');
+  });
+});
+
+describe('currentApiBaseUrl', () => {
+  it('follows the stored base url so a re-login switches environments without a restart', () => {
+    const cfg = resolveConfig({}, { tokenFileDir: dir });
+    const store = createFileTokenStore(dir);
+    store.write({ token: 't', apiBaseUrl: 'https://later.test/', updatedAt: 'now' });
+    expect(currentApiBaseUrl(cfg, store)).toBe('https://later.test');
+  });
+
+  it('keeps the env override above the stored base url', () => {
+    const cfg = resolveConfig(
+      { KIIP_API_BASE_URL: 'https://env.test' },
+      { tokenFileDir: dir },
+    );
+    const store = createFileTokenStore(dir);
+    store.write({ token: 't', apiBaseUrl: 'https://stored.test', updatedAt: 'now' });
+    expect(currentApiBaseUrl(cfg, store)).toBe('https://env.test');
   });
 });

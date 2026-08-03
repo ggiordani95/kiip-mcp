@@ -7,9 +7,18 @@ export class KiipMcpError extends Error {
 
 export class ConfigurationError extends KiipMcpError {}
 
+export class NotAuthenticatedError extends KiipMcpError {
+  constructor(
+    message = 'Not logged in to Kiip. Run `/kiip-login` in Claude Code to authenticate, or set KIIP_TOKEN in your env.',
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+  }
+}
+
 export class UnauthorizedError extends KiipMcpError {
   constructor(
-    message = 'Kiip token expired or invalid. Log in again on the Kiip UI, copy the new JWT, update the KIIP_TOKEN env in your MCP client and restart it.',
+    message = 'Kiip session expired or invalid. Run `/kiip-login` in Claude Code to log in again.',
     options?: { cause?: unknown },
   ) {
     super(message, options);

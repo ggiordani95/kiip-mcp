@@ -24,7 +24,7 @@ describe('wrap', () => {
     });
     const result = await handler({});
     expect(result.isError).toBe(true);
-    expect(result.content[0]!.text).toMatch(/KIIP_TOKEN/);
+    expect(result.content[0]!.text).toMatch(/kiip-login/);
   });
 
   it('converts unknown errors to a generic isError result', async () => {

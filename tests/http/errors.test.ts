@@ -26,9 +26,9 @@ describe('KiipMcpError hierarchy', () => {
     expect(err.status).toBe(500);
   });
 
-  it('UnauthorizedError has a helpful default message about re-pasting the token', () => {
+  it('UnauthorizedError has a helpful default message pointing at /kiip-login', () => {
     const err = new UnauthorizedError();
-    expect(err.message).toMatch(/KIIP_TOKEN/);
+    expect(err.message).toMatch(/kiip-login/);
     expect(err.message).toMatch(/expired|invalid/i);
   });
 

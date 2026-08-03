@@ -1,3 +1,4 @@
+import { NotAuthenticatedError } from './http/errors';
 import type { StoredToken, TokenStore } from './token-store';
 
 export interface SessionStore {
@@ -5,16 +6,14 @@ export interface SessionStore {
   setToken(token: string): void;
 }
 
-export function createSessionStore(initialToken: string, store?: TokenStore): SessionStore {
+export function createSessionStore(initialToken?: string, store?: TokenStore): SessionStore {
   let current = initialToken;
 
   return {
     getToken: () => {
-      if (store) {
-        const stored = store.read();
-        if (stored) return stored.token;
-      }
-      return current;
+      const token = store?.read()?.token ?? current;
+      if (!token) throw new NotAuthenticatedError();
+      return token;
     },
     setToken: (token) => {
       if (!token) {
