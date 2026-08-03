@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createKiipClient } from '../../src/http/kiip-client';
 import { TimeoutError, UnauthorizedError } from '../../src/http/errors';
+import { createKiipClient } from '../../src/http/kiip-client';
 import { createSessionStore } from '../../src/session';
 
 const baseUrl = 'https://api.kiip.test';
@@ -130,4 +130,3 @@ describe('KiipClient.put', () => {
     expect(init.method).toBe('PUT');
   });
 });
-

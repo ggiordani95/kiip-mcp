@@ -32,9 +32,8 @@ export function registerPersonTools(server: McpServer, { client }: PersonToolsDe
           .describe('Máximo por página (até 200).'),
       },
     },
-    wrap(
-      async (args: { search?: string; status?: string; page?: number; pageSize?: number }) =>
-        ok(await client.get('/persons', args)),
+    wrap(async (args: { search?: string; status?: string; page?: number; pageSize?: number }) =>
+      ok(await client.get('/persons', args)),
     ),
   );
 

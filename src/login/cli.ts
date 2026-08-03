@@ -1,5 +1,5 @@
 import { createFileTokenStore } from '../token-store';
-import { createLoginServer } from './http-server';
+import { createLoginServer, type LoginServerHandle } from './http-server';
 import { openBrowser } from './open-browser';
 
 const DEFAULT_API_BASE_URL = 'https://alpha-app-api.kiip.team';
@@ -16,7 +16,7 @@ export async function runLoginCli(env: Record<string, string | undefined>): Prom
     return 1;
   }
 
-  let handle;
+  let handle: LoginServerHandle;
   try {
     handle = await createLoginServer({ apiBaseUrl, store, port });
   } catch (err) {

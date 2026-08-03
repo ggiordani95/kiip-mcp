@@ -8,9 +8,8 @@ interface RegisteredToolLike {
 }
 
 export function getTool(server: McpServer, name: string): RegisteredToolLike {
-  const registry = (
-    server as unknown as { _registeredTools: Record<string, RegisteredToolLike> }
-  )._registeredTools;
+  const registry = (server as unknown as { _registeredTools: Record<string, RegisteredToolLike> })
+    ._registeredTools;
   const tool = registry[name];
   if (!tool) throw new Error(`Tool not registered: ${name}`);
   return tool;

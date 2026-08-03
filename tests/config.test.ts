@@ -114,10 +114,7 @@ describe('currentApiBaseUrl', () => {
   });
 
   it('keeps the env override above the stored base url', () => {
-    const cfg = resolveConfig(
-      { KIIP_API_BASE_URL: 'https://env.test' },
-      { tokenFileDir: dir },
-    );
+    const cfg = resolveConfig({ KIIP_API_BASE_URL: 'https://env.test' }, { tokenFileDir: dir });
     const store = createFileTokenStore(dir);
     store.write({ token: 't', apiBaseUrl: 'https://stored.test', updatedAt: 'now' });
     expect(currentApiBaseUrl(cfg, store)).toBe('https://env.test');

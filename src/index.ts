@@ -1,5 +1,5 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { resolveConfig } from './config';
+import { type KiipConfig, resolveConfig } from './config';
 import { ConfigurationError } from './http/errors';
 import { runLoginCli } from './login/cli';
 import { createServer } from './server';
@@ -22,7 +22,7 @@ async function main(): Promise<number> {
     return runLoginCli(process.env);
   }
 
-  let cfg;
+  let cfg: KiipConfig;
   try {
     cfg = resolveConfig(process.env);
   } catch (err) {
@@ -36,7 +36,9 @@ async function main(): Promise<number> {
   await server.connect(new StdioServerTransport());
   console.error(`[kiip-mcp] ready (base: ${cfg.apiBaseUrl})`);
   if (!cfg.token) {
-    console.error('[kiip-mcp] not logged in yet — run `/kiip-login` in Claude Code to authenticate.');
+    console.error(
+      '[kiip-mcp] not logged in yet — run `/kiip-login` in Claude Code to authenticate.',
+    );
   }
   return 0;
 }

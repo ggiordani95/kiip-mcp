@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerTenantTools } from '../../src/tools/tenants';
-import { createSessionStore } from '../../src/session';
+import { describe, expect, it, vi } from 'vitest';
 import type { KiipClient } from '../../src/http/kiip-client';
+import { createSessionStore } from '../../src/session';
+import { registerTenantTools } from '../../src/tools/tenants';
 import { callTool } from './_helpers';
 
 function makeServer() {

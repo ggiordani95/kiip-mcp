@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { KIIP_INSTRUCTIONS } from './constants/kiip-docs';
 import { currentApiBaseUrl, type KiipConfig } from './config';
+import { KIIP_INSTRUCTIONS } from './constants/kiip-docs';
 import { createKiipClient } from './http/kiip-client';
 import { createSessionStore } from './session';
 import { createFileTokenStore } from './token-store';

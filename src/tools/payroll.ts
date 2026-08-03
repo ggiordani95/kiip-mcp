@@ -23,13 +23,8 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
         pageSize: z.number().int().positive().max(200).optional(),
       },
     },
-    wrap(
-      async (args: {
-        competency?: string;
-        status?: string;
-        page?: number;
-        pageSize?: number;
-      }) => ok(await client.get('/payrolls', args)),
+    wrap(async (args: { competency?: string; status?: string; page?: number; pageSize?: number }) =>
+      ok(await client.get('/payrolls', args)),
     ),
   );
 
@@ -58,9 +53,8 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
         pageSize: z.number().int().positive().max(200).optional(),
       },
     },
-    wrap(
-      async (args: { payrollId?: string; page?: number; pageSize?: number }) =>
-        ok(await client.get('/payroll-events', args)),
+    wrap(async (args: { payrollId?: string; page?: number; pageSize?: number }) =>
+      ok(await client.get('/payroll-events', args)),
     ),
   );
 
@@ -78,9 +72,8 @@ export function registerPayrollTools(server: McpServer, { client }: PayrollTools
         pageSize: z.number().int().positive().max(200).optional(),
       },
     },
-    wrap(
-      async (args: { personId?: string; page?: number; pageSize?: number }) =>
-        ok(await client.get('/scheduled-entries', args)),
+    wrap(async (args: { personId?: string; page?: number; pageSize?: number }) =>
+      ok(await client.get('/scheduled-entries', args)),
     ),
   );
 }

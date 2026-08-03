@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ok, okText, wrap } from '../../src/tools/helpers';
 import { KiipMcpError, UnauthorizedError } from '../../src/http/errors';
+import { ok, okText, wrap } from '../../src/tools/helpers';
 
 describe('ok', () => {
   it('wraps a value as a text content block', () => {

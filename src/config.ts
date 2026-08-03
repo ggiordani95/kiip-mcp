@@ -37,9 +37,7 @@ export function resolveConfig(
   const override = parsed.data.KIIP_API_BASE_URL;
 
   const token = parsed.data.KIIP_TOKEN ?? stored?.token;
-  const apiBaseUrl = withoutTrailingSlash(
-    override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL,
-  );
+  const apiBaseUrl = withoutTrailingSlash(override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL);
   const apiBaseUrlOverride = override ? withoutTrailingSlash(override) : undefined;
   const timeoutMs = parsed.data.KIIP_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS;
 

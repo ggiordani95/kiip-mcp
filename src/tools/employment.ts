@@ -7,10 +7,7 @@ export interface EmploymentToolsDeps {
   client: KiipClient;
 }
 
-export function registerEmploymentTools(
-  server: McpServer,
-  { client }: EmploymentToolsDeps,
-): void {
+export function registerEmploymentTools(server: McpServer, { client }: EmploymentToolsDeps): void {
   server.registerTool(
     'list_employment_relationships',
     {

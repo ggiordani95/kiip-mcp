@@ -18,10 +18,9 @@ export async function loginToKiip(
       body: JSON.stringify({ email, password }),
     });
   } catch (err) {
-    throw new LoginError(
-      'Could not reach the Kiip backend. Check your connection and try again.',
-      { cause: err },
-    );
+    throw new LoginError('Could not reach the Kiip backend. Check your connection and try again.', {
+      cause: err,
+    });
   }
 
   const text = await response.text();

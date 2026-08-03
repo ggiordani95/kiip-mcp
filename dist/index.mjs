@@ -23120,9 +23120,7 @@ function resolveConfig(env, opts = {}) {
   const stored = createFileTokenStore(opts.tokenFileDir).read();
   const override = parsed.data.KIIP_API_BASE_URL;
   const token = parsed.data.KIIP_TOKEN ?? stored?.token;
-  const apiBaseUrl = withoutTrailingSlash(
-    override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL
-  );
+  const apiBaseUrl = withoutTrailingSlash(override ?? stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL);
   const apiBaseUrlOverride = override ? withoutTrailingSlash(override) : void 0;
   const timeoutMs = parsed.data.KIIP_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS;
   return { token, apiBaseUrl, apiBaseUrlOverride, timeoutMs };
@@ -23159,10 +23157,9 @@ async function loginToKiip(baseUrl, email3, password) {
       body: JSON.stringify({ email: email3, password })
     });
   } catch (err) {
-    throw new LoginError(
-      "Could not reach the Kiip backend. Check your connection and try again.",
-      { cause: err }
-    );
+    throw new LoginError("Could not reach the Kiip backend. Check your connection and try again.", {
+      cause: err
+    });
   }
   const text = await response.text();
   let body = {};
@@ -31977,7 +31974,9 @@ async function main() {
   await server.connect(new StdioServerTransport());
   console.error(`[kiip-mcp] ready (base: ${cfg.apiBaseUrl})`);
   if (!cfg.token) {
-    console.error("[kiip-mcp] not logged in yet \u2014 run `/kiip-login` in Claude Code to authenticate.");
+    console.error(
+      "[kiip-mcp] not logged in yet \u2014 run `/kiip-login` in Claude Code to authenticate."
+    );
   }
   return 0;
 }
